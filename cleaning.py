@@ -1,3 +1,4 @@
+# -----------------------------------------------------------------------------------------------------------------------------------------------
 # import necessary libraries
 import pandas as pd
 import numpy as np
@@ -9,11 +10,33 @@ import math
 import os
 import time
 import geopandas as gpd
+import datetime
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 from shapely.geometry import Point
 from tkinter import Tk
-from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askopenfilename, asksaveasfilename,askopenfilenames
+
+# ---------------------------------------------------------------------------------------------------------------------------------
+# Get the current time
+current_time = datetime.datetime.now().time()
+
+# Determine the appropriate greeting based on the current time
+greeting = ""
+if current_time < datetime.time(12):
+    greeting = "Good Morning"
+    emoji = "\u2615"  # Coffee emoji
+elif current_time < datetime.time(18):
+    greeting = "Good Afternoon"
+    emoji = "\U0001F44D"  # Thumbs up emoji
+else:
+    greeting = "Good Evening"
+    emoji = "\U0001F44D"  # Thumbs up emoji
+
+# Print the  message
+print("The script is now beginning.")
+print(f"{greeting}!")
+print(f'{emoji}')
 
 # Open file selection dialog
 Tk().withdraw()
@@ -53,6 +76,7 @@ df.duplicated().any()
 # Data Cleaning
 print('-------------------Data Cleaning-------------------')
 
+
 # Convert all object data to title case
 df = df.apply(lambda x: x.str.lower() if x.dtype == 'object' else x)
 
@@ -62,6 +86,11 @@ df = df.apply(lambda x: x.str.strip() if x.dtype == 'object' else x)
 # Convert all column names to lower case
 df.columns = df.columns.str.lower()
 
+# convert column datatype
+columns_to_convert = ['household_id', 'village_id','sublocation_id','location_id','constituency_id','county_id']
+for column in columns_to_convert:
+    df[column] = df[column].astype('object')    
+   
 # Check the counties in the dataset
 print('Counties in the dataset are:')
 
@@ -162,6 +191,7 @@ print('-------------------------start cleaning coordinates county by county-----
 # Define the cleaning function
 def clean_coordinates(df):
     # Filter by county name
+    start_time = time.time()  # Record the start time
     county_options = df['county_name'].unique()
 
     # Print the available unique counties to allow the user to pick
@@ -267,17 +297,26 @@ def clean_coordinates(df):
     # Show the chart
     plt.show()
 
-    # convert column datatype
-    columns_to_convert = ['household_id', 'village_id']
-    for column in columns_to_convert:
-        filtered_county[column] = filtered_county[column].astype('object')    
-   
-    # save new file as csv
-    output_dir = "cleaned_data"
+    # save new file as xlsx
+    output_dir = "cleaned_xlsx_data"
     os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
+    output_file = os.path.join(output_dir, f"{selected_county}_cleaned.xlsx")
+    filtered_county.to_excel(output_file, index=False)
+    print(f"Cleaned data saved as {output_file}")
+
+
+    # save new file as csv (for GIS)
+    output_dir = "cleaned_csv_data"
+    # Create the directory if it doesn't exist
+    os.makedirs(output_dir, exist_ok=True)  
     output_file = os.path.join(output_dir, f"{selected_county}_cleaned.csv")
     filtered_county.to_csv(output_file, index=False)
     print(f"Cleaned data saved as {output_file}")
+
+    # Calculate the elapsed time
+    elapsed_time = time.time() - start_time
+    # Print the estimated waiting time
+    print(f"Estimated waiting time: {elapsed_time:.2f} seconds")
 
     return True
 
@@ -288,6 +327,46 @@ while True:
         break
 
 
+#  Provide user with option to concantenate xlxs file to have one large dataset
+# Ask the user if they want to concatenate multiple files
+concat_option = input("Do you want to concatenate multiple XLSX files? (Y/N): ")
+
+if concat_option.upper() == "Y":
+    # Prompt the user to select the XLSX files
+    Tk().withdraw()
+    xlsx_files = askopenfilenames(title="Select XLSX files to concatenate", filetypes=[("XLSX Files", "*.xlsx")])
+
+    if xlsx_files:
+        # Read the selected XLSX files and append them to a list of DataFrames
+        dfs = []
+        for file in xlsx_files:
+            df = pd.read_excel(file)
+            dfs.append(df)
+
+        if dfs:
+            # Concatenate the DataFrames
+            concatenated_df = pd.concat(dfs)
+
+            # Prompt the user to select the output file location and name
+            Tk().withdraw()
+            output_concatenated_file = asksaveasfilename(
+                title="Save Concatenated XLSX File As",
+                filetypes=[("XLSX File", "*.xlsx")],
+                defaultextension=".xlsx"
+            )
+
+            if output_concatenated_file:
+                # Save the concatenated DataFrame as an Excel file
+                concatenated_df.to_excel(output_concatenated_file, index=False)
+                print(f"Concatenated data saved as {output_concatenated_file}")
 # ------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+# Print the farewell message
+print("The script is finally over.")
+print(f"{greeting}!")
+print(f'{emoji}')
+
 
 print('continue coding \N{winking face}')

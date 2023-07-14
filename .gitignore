@@ -163,6 +163,6 @@ cython_debug/
 /Images
 /Report
 /shapefiles
-/turkana.csv
-/turkana_beneficiaries.gpkg
 /data.py
+/cleaned_csv_data
+/cleaned_xlsx_data
