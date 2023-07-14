@@ -43,8 +43,10 @@ print(f'{emoji}')
 Tk().withdraw()
 filename = askopenfilename(title='Select Excel file', filetypes=[('Excel Files', '*.xlsx')])
 
-# Read the selected Excel file
-df = pd.read_excel(filename)
+# Read the selected Excel file with a progress bar
+with tqdm(total=1, desc="Reading Excel File") as pbar:
+    df = pd.read_excel(filename)
+    pbar.update(1)
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -265,8 +267,7 @@ def clean_coordinates(df):
         return selected_boundary.contains(point).any()
     
     # Simulate placing coordinates inside the shapefile
-    for _ in tqdm(filtered_county.iterrows(), total=len(filtered_county), desc="Placing Coordinates"):
-        row = _
+    for index, row in tqdm(filtered_county.iterrows(), total=len(filtered_county), desc="Placing Coordinates"):
         latitude = row['latitude']
         longitude = row['longitude']
 
