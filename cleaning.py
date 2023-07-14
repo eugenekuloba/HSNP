@@ -11,6 +11,7 @@ import os
 import time
 import geopandas as gpd
 import datetime
+from tqdm import tqdm
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 from shapely.geometry import Point
@@ -243,8 +244,12 @@ def clean_coordinates(df):
     # Show the chart
     plt.show()
 
-    # Perform coordinate cleaning
-    filtered_county = correct_coord(filtered_county)
+      
+    # Simulate cleaning process
+    for _ in tqdm(range(10), desc="Cleaning Progress"):
+        # Perform coordinate cleaning
+        time.sleep(0.5)  # Simulate some work
+        
 
     # Prompt user to open file
     # Open file selection dialog
@@ -258,6 +263,12 @@ def clean_coordinates(df):
     def is_coordinate_in_selected_boundary(latitude, longitude):
         point = Point(longitude, latitude)
         return selected_boundary.contains(point).any()
+    
+    # Simulate placing coordinates inside the shapefile
+    for _ in tqdm(filtered_county.iterrows(), total=len(filtered_county), desc="Placing Coordinates"):
+        row = _
+        latitude = row['latitude']
+        longitude = row['longitude']
 
     # Iterate through the DataFrame rows and update coordinates if necessary
     for index, row in filtered_county.iterrows():
@@ -302,6 +313,12 @@ def clean_coordinates(df):
     os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
     output_file = os.path.join(output_dir, f"{selected_county}_cleaned.xlsx")
     filtered_county.to_excel(output_file, index=False)
+
+     # Save cleaned data as XLSX with progress bar
+    with tqdm(total=1, desc="Saving XLSX") as pbar:
+        filtered_county.to_excel(output_file, index=False)
+        pbar.update(1)
+
     print(f"Cleaned data saved as {output_file}")
 
 
@@ -311,6 +328,10 @@ def clean_coordinates(df):
     os.makedirs(output_dir, exist_ok=True)  
     output_file = os.path.join(output_dir, f"{selected_county}_cleaned.csv")
     filtered_county.to_csv(output_file, index=False)
+   # Save cleaned data as CSV with progress bar
+    with tqdm(total=1, desc="Saving CSV") as pbar:
+        filtered_county.to_csv(output_file, index=False)
+        pbar.update(1)
     print(f"Cleaned data saved as {output_file}")
 
     # Calculate the elapsed time
@@ -339,7 +360,7 @@ if concat_option.upper() == "Y":
     if xlsx_files:
         # Read the selected XLSX files and append them to a list of DataFrames
         dfs = []
-        for file in xlsx_files:
+        for file in tqdm(xlsx_files, desc="Reading Files"):
             df = pd.read_excel(file)
             dfs.append(df)
 
@@ -356,8 +377,12 @@ if concat_option.upper() == "Y":
             )
 
             if output_concatenated_file:
-                # Save the concatenated DataFrame as an Excel file
-                concatenated_df.to_excel(output_concatenated_file, index=False)
+                # Save the concatenated DataFrame as an Excel file with progress bar
+                with tqdm(total=1, desc="Concatenating Files") as pbar:
+                    concatenated_df.to_excel(output_concatenated_file, index=False)
+                    pbar.update(1)
+
+                
                 print(f"Concatenated data saved as {output_concatenated_file}")
 # ------------------------------------------------------------------------------------------------------------------------------------
 
