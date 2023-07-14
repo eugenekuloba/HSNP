@@ -22,6 +22,8 @@ filename = askopenfilename(title='Select Excel file', filetypes=[('Excel Files',
 # Read the selected Excel file
 df = pd.read_excel(filename)
 
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 # Data Understanding
 print('-------------------Data Understanding-------------------')
 
@@ -44,6 +46,8 @@ df.isna().sum()
 
 # Check for duplicates
 df.duplicated().any()
+
+# ---------------------------------------------------------------------------------------------------------------------------
 
 
 # Data Cleaning
@@ -128,36 +132,162 @@ plt.savefig(plot_file)
 plt.tight_layout()
 plt.show()
 
-# start cleaning coordinates county by county
+# def correct_coord():
+def correct_coord(df):
+    # If latitude is greater than longitude, interchange them
+    mask = df['latitude'] > df['longitude']
+    df.loc[mask, ['latitude', 'longitude']] = df.loc[mask, ['longitude', 'latitude']].values
+    
+    # Calculate the correction factor for latitude
+    factors_lat = df['latitude'].apply(lambda x: 10 ** -(len(str(int(x))) - 1))
+    
+    # Divide each latitude value by its correction factor
+    df['latitude'] = df['latitude'] * factors_lat
+    
+    # Calculate the correction factor for longitude
+    factors_lon = df['longitude'].apply(lambda x: 10 ** -(len(str(int(x))) - 2))
+    
+    # Divide each longitude value by its correction factor
+    df['longitude'] = df['longitude'] * factors_lon
+    
+    return df
+
+correct_coord(df)
+
+
 # filter by county name
-# check the unique counties in the dataframe
-county_options = df['county_name'].unique()
+print('-------------------------start cleaning coordinates county by county----------------------------')
 
-# print the available unique counties to allow user to pick
-print("Available county options:")
-for i, county in enumerate(county_options, start=1):
-    print(f"{i}. {county}")
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Define the cleaning function
+def clean_coordinates(df):
+    # Filter by county name
+    county_options = df['county_name'].unique()
 
-county_choice = input("Enter the number or name corresponding to the county: ")
+    # Print the available unique counties to allow the user to pick
+    print("Available county options:")
+    for i, county in enumerate(county_options, start=1):
+        print(f"{i}. {county}")
 
-# Filter selected county from dataset to work with
-if county_choice.isdigit():
-    county_choice = int(county_choice)
-    if county_choice < 1 or county_choice > len(county_options):
-        print("Invalid selection.")
-        exit()
-    selected_county = county_options[county_choice - 1]
-else:
-    if county_choice not in county_options:
-        print("Invalid county name.")
-        exit()
-    selected_county = county_choice
+    county_choice = input("Enter the number or name corresponding to the county (or 'q' to quit): ")
+
+    if county_choice.lower() == 'q':
+        print("Exiting the program...")
+        return False
+
+    # Filter selected county from the dataset to work with
+    if county_choice.isdigit():
+        county_choice = int(county_choice)
+        if county_choice < 1 or county_choice > len(county_options):
+            print("Invalid selection.")
+            return True
+        selected_county = county_options[county_choice - 1]
+    else:
+        if county_choice not in county_options:
+            print("Invalid county name.")
+            return True
+        selected_county = county_choice
+
+    filtered_county = df[df['county_name'] == selected_county]
+
+    print('--------------------- Info on selected county -------------------')
+    print(f"County: {selected_county}")
+    print(filtered_county.info())
+
+    # Create a figure with a single subplot
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    # Create a boxplot for the latitude and longitude columns
+    sns.boxplot(data=filtered_county[['latitude', 'longitude']], orient='h', ax=ax, palette='pastel')
+
+    # Set the chart title and axis labels
+    ax.set_title('Latitude and Longitude Boxplot', fontsize=14)
+    ax.set_xlabel('Coordinate Value', fontsize=12)
+    ax.set_ylabel('Coordinate Type', fontsize=12)
+    ax.tick_params(labelsize=10)
+
+    # Save the plot
+    plot_file = os.path.join(plot_dir, f'{selected_county}_coord_before_cleaning.png')
+    plt.savefig(plot_file)
+
+    # Show the chart
+    plt.show()
+
+    # Perform coordinate cleaning
+    filtered_county = correct_coord(filtered_county)
+
+    # Prompt user to open file
+    # Open file selection dialog
+    Tk().withdraw()
+    filename = askopenfilename(title='Select Shapefile (Pick for the county you filtered)', filetypes=[('Shapefile', '*.shp')])
+
+    # Read the selected shapefile into a GeoDataFrame
+    selected_boundary = gpd.read_file(filename)
+
+    # Function to check if a coordinate is in the selected boundary
+    def is_coordinate_in_selected_boundary(latitude, longitude):
+        point = Point(longitude, latitude)
+        return selected_boundary.contains(point).any()
+
+    # Iterate through the DataFrame rows and update coordinates if necessary
+    for index, row in filtered_county.iterrows():
+        latitude = row['latitude']
+        longitude = row['longitude']
+
+        if not is_coordinate_in_selected_boundary(latitude, longitude):
+            # Assign random coordinates within the county boundary
+            while True:
+                # Set the latitude range to cover the approximate area of the selected county
+                random_latitude = random.uniform(selected_boundary.bounds['miny'], selected_boundary.bounds['maxy'])
+                # Set the longitude range to cover the approximate area of the selected county
+                random_longitude = random.uniform(selected_boundary.bounds['minx'], selected_boundary.bounds['maxx'])
+
+                if is_coordinate_in_selected_boundary(random_latitude, random_longitude):
+                    # Found a random coordinate within the selected boundaries and update the DataFrame
+                    filtered_county.at[index, 'latitude'] = random_latitude
+                    filtered_county.at[index, 'longitude'] = random_longitude
+                    break
+
+    # Create a figure with a single subplot
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    # Create a boxplot for the latitude and longitude columns
+    sns.boxplot(data=filtered_county[['latitude', 'longitude']], orient='h', ax=ax, palette='pastel')
+
+    # Set the chart title and axis labels
+    ax.set_title('Latitude and Longitude Boxplot', fontsize=14)
+    ax.set_xlabel('Coordinate Value', fontsize=12)
+    ax.set_ylabel('Coordinate Type', fontsize=12)
+    ax.tick_params(labelsize=10)
+
+    # Save the plot
+    plot_file = os.path.join(plot_dir, f'{selected_county}_coord_after_cleaning.png')
+    plt.savefig(plot_file)
+
+    # Show the chart
+    plt.show()
+
+    # convert column datatype
+    columns_to_convert = ['household_id', 'village_id']
+    for column in columns_to_convert:
+        filtered_county[column] = filtered_county[column].astype('object')    
+   
+    # save new file as csv
+    output_dir = "cleaned_data"
+    os.makedirs(output_dir, exist_ok=True)  # Create the directory if it doesn't exist
+    output_file = os.path.join(output_dir, f"{selected_county}_cleaned.csv")
+    filtered_county.to_csv(output_file, index=False)
+    print(f"Cleaned data saved as {output_file}")
+
+    return True
+
+    
+# Main loop
+while True:
+    if not clean_coordinates(df):
+        break
 
 
-filtered_county = df[df['county_name'] == selected_county]
-
-
-
-
+# ------------------------------------------------------------------------------------------------------------------------------------
 
 print('continue coding \N{winking face}')
