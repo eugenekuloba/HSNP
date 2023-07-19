@@ -50,6 +50,7 @@ geopandas==0.10.2
 geopy==2.3.0
 gitdb==4.0.10
 GitPython==3.1.32
+greenlet==2.0.2
 gssapi==1.8.2
 idna==3.4
 importlib-metadata==6.7.0
@@ -188,7 +189,6 @@ websocket-client==1.6.1
 widgetsnbextension==4.0.8
 winkerberos==0.9.1
 wrapt==1.15.0
-xlrd==0.7.1
 xlwt==0.7.2
 y-py==0.5.9
 ypy-websocket==0.8.2
