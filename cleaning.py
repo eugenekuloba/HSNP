@@ -34,10 +34,10 @@ else:
     greeting = "Good Evening"
     emoji = "\U0001F44D"  # Thumbs up emoji
 
-# Print the  message
 print("The script is now beginning.")
 print(f"{greeting}!")
 print(f'{emoji}')
+
 
 # Open file selection dialog
 Tk().withdraw()
