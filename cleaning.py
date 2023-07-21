@@ -12,8 +12,6 @@ import time
 import geopandas as gpd
 import datetime
 from tqdm import tqdm
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
 from shapely.geometry import Point
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename,askopenfilenames
