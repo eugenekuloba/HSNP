@@ -1,0 +1,50 @@
+# Create a 5 km mesh-grid covering the roads layer
+grid = gpd.GeoDataFrame(geometry=ecoscope.base.utils.create_meshgrid(
+    humans_killed.geometry.unary_union,
+    in_crs=my_crs,
+    out_crs=my_crs,
+    xlen=pixel_size_m,
+    ylen=pixel_size_m,
+    return_intersecting_only=False,
+))
+# 4 colours
+colour_palette = [
+    "#ffff99",  # Pale Yellow
+    "#fdae61",  # Orange
+    "#e6550d",  # Even Darker Orange
+    "#b22222"   # Red
+]
+
+# Assign color in the palette to the values
+legend_dict = {
+    1: colour_palette[0],
+    2: colour_palette[1],
+    3: colour_palette[2],
+    4: colour_palette[3]
+}
+
+# Assign colors directly to 'grid' based on the custom 'legend_dict'
+grid['colour'] = grid[val_column].map(legend_dict)
+
+# Drop rows with NaN values in the 'colour' column
+grid1 = grid.dropna()
+
+# Filter legend_dict to only include keys present in the dataset
+legend_dict = {k: v for k, v in legend_dict.items() if k in grid1[val_column].unique()}
+
+# Visualize & Export
+m = ecoscope.mapping.EcoMap(height=500, width=500*1.73333, static=True)
+m.add_basemap("Stamen.TerrainBackground")
+m.add_tile_layer(
+    url="https://tiles.arcgis.com/tiles/POUcpLYXNckpLjnY/arcgis/rest/services/landDx_basemap_tiles_mapservice/MapServer/tile/{z}/{y}/{x}",
+    name="LandDx",
+    attribution="MEP",
+    opacity=0.7,
+)
+m.add_gdf(grid1, color=grid1['colour'].tolist(), style_kwds={'fillOpacity': 0.75})
+
+m.add_legend(title="Humans killed (2015-now) /25 sq.km", legend_dict=legend_dict)
+
+m.zoom_to_gdf(grid1)
+#m.to_png(os.path.join(output_dir, "HWC_Humans_Killed_.png"))
+m
