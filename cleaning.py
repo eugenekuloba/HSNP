@@ -12,8 +12,6 @@ import time
 import geopandas as gpd
 import datetime
 from tqdm import tqdm
-from geopy.geocoders import Nominatim
-from geopy.exc import GeocoderTimedOut
 from shapely.geometry import Point
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename, asksaveasfilename,askopenfilenames
@@ -34,10 +32,10 @@ else:
     greeting = "Good Evening"
     emoji = "\U0001F44D"  # Thumbs up emoji
 
-# Print the  message
 print("The script is now beginning.")
 print(f"{greeting}!")
 print(f'{emoji}')
+
 
 # Open file selection dialog
 Tk().withdraw()
