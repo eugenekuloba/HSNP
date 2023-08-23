@@ -1,34 +1,14 @@
-library(shiny)
-library(leaflet)
+# load necessary libraries
 library(dplyr)
-library(ggplot2)
+library(sf)
+library(readxl)
 
-# # Load your summarized data (replace 'summarized_data.csv' with your actual file)
-# summarized_data <- read.csv("summarized.csv")
+# read xlsx file
+data <- read_excel("cleaned_xlsx_data/cleaned_data.xlsx")
+View(data)
+ 
+# Create an sf object with point geometries from lat and long columns
+sf_data <- st_as_sf(data, coords = c("longitude", "latitude"), crs = 4326)
 
-# ui <- fluidPage(
-#   titlePanel("County Beneficiaries Map"),
-#   leafletOutput("map")
-# )
-
-# server <- function(input, output) {
-#   output$map <- renderLeaflet({
-#     leaflet(summarized_data) %>%
-#       addTiles() %>%
-#       addMarkers(
-#         lng = ~longitude,
-#         lat = ~latitude,
-#         label = ~paste("County: ", county_name, "<br>Beneficiaries: ", beneficiaries_count)
-#       )
-#   })
-# }
-
-# shinyApp(ui, server)
-
-# plot graphs
-df <- read.csv("cleaned_csv_data/turkana_cleaned.csv")
-
-ggplot(df)+
-  geom_point(aes(x=longitude,y=latitude,color=isbeneficiaryhh))
-     
-print("finished")
+# Visualize data
+plot(sf_data)
