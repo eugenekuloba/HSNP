@@ -1,0 +1,10 @@
+name: r-shiny
+title:
+username: hsnp
+account: hsnp
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 9661437
+bundleId: 7600435
+url: https://hsnp.shinyapps.io/r-shiny/
+version: 1
