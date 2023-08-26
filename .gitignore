@@ -1,6 +1,6 @@
-/cleaned_csv_data
-/cleaned_xlsx_data
-/Data
-interactive_map_files
-/Shapefiles
-file.csv
+/python/cleaned_csv_data
+/python/cleaned_xlsx_data
+/python/Data
+/python/interactive_map_files
+/python/Shapefiles
+/python/file.csv
